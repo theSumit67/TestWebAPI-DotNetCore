@@ -12,6 +12,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using TestWebAPI.Data;
+using TestWebAPI.Repository.IRepository;
+using AutoMapper;
+using TestWebAPI.Mappings;
 
 namespace TestWebAPI
 {
@@ -28,6 +31,13 @@ namespace TestWebAPI
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(Configuration.GetConnectionString("Default")));
+
+            // register repository
+            services.AddScoped<INationalParkRepository, NationalParkRepository>();
+
+            // 
+            services.AddAutoMapper(typeof(TestWebMappings));
+
             services.AddControllers();
         }
 
