@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using TestWebAPI.Models;
 using TestWebAPI.Models.DTOs;
 using TestWebAPI.Repository.IRepository;
 
@@ -49,6 +50,36 @@ namespace TestWebAPI.Controllers
             }
             var objDto = _mapper.Map<NationalParkDTO>(obj);
             return Ok(objDto);
+        }
+
+        [HttpPost]
+        public IActionResult CreateNationalPark([FromBody] NationalParkDTO parkDto)
+        {
+            if (parkDto == null)
+            {
+                // model state contans error encountered
+                return BadRequest(ModelState);
+            }
+
+            if (_npRepo.NationalParkExists(parkDto.Name))
+            {
+                ModelState.AddModelError("", "Duplicate Name / Already exist");
+                return StatusCode(404, ModelState);
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var parkObj = _mapper.Map<NationalPark>(parkDto);
+            if (!_npRepo.CreateNationalPark(parkObj))
+            {
+                ModelState.AddModelError("", $"Something went wrong when saving     {parkObj.Name }");
+                return StatusCode(500, ModelState);
+            }
+
+            return Ok();
         }
     }
 }
