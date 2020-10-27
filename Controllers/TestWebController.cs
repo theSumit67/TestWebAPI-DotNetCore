@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using TestWebAPI.Models.DTOs;
 using TestWebAPI.Repository.IRepository;
 
 namespace TestWebAPI.Controllers
@@ -19,7 +20,7 @@ namespace TestWebAPI.Controllers
         public NationalParksController(INationalParkRepository npRepo, IMapper mapper)
         {
             _npRepo = npRepo;
-            _mapper = mapper;    
+            _mapper = mapper;
         }
 
         [HttpGet]
@@ -27,8 +28,27 @@ namespace TestWebAPI.Controllers
         {
 
             var objList = _npRepo.GetNationalParks();
+            // never expose domain model; convert to DTOs
+            var objDTO = new List<NationalParkDTO>();
+            foreach (var obj in objList)
+            {
+                objDTO.Add(_mapper.Map<NationalParkDTO>(obj));
+            }
 
-            return Ok(objList);
+            return Ok(objDTO);
+        }
+
+        // need routeParam template to eliminate ambiguous routes
+        [HttpGet("{parkId:int}")] // dont add space in value
+        public IActionResult GetNationalPark(int parkId)
+        {
+            var obj = _npRepo.GetNationalPark(parkId);
+            if (obj == null)
+            {
+                return NotFound();
+            }
+            var objDto = _mapper.Map<NationalParkDTO>(obj);
+            return Ok(objDto);
         }
     }
 }
