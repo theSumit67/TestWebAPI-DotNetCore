@@ -40,7 +40,8 @@ namespace TestWebAPI.Controllers
         }
 
         // need routeParam template to eliminate ambiguous routes
-        [HttpGet("{parkId:int}")] // dont add space in value
+        // Name attribute used in post call to return newly created object
+        [HttpGet("{parkId:int}", Name = "GetNationalPark")] // dont add space in value
         public IActionResult GetNationalPark(int parkId)
         {
             var obj = _npRepo.GetNationalPark(parkId);
@@ -67,10 +68,8 @@ namespace TestWebAPI.Controllers
                 return StatusCode(404, ModelState);
             }
 
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            // if model state is invalid it will automatically reponse in error if validation annotations are added
+            // if (!ModelState.IsValid) { return BadRequest(ModelState);}
 
             var parkObj = _mapper.Map<NationalPark>(parkDto);
             if (!_npRepo.CreateNationalPark(parkObj))
@@ -78,8 +77,48 @@ namespace TestWebAPI.Controllers
                 ModelState.AddModelError("", $"Something went wrong when saving     {parkObj.Name }");
                 return StatusCode(500, ModelState);
             }
+            // parkId key should match with specified route argument
+            return CreatedAtRoute("GetNationalPark", new { parkId = parkObj.Id }, parkObj);
+        }
 
-            return Ok();
+        [HttpPatch("{parkId:int}", Name = "UpdateNationalPark")] // dont add space in value
+        public IActionResult UpdateNationalPark(int parkId, [FromBody] NationalParkDTO parkDto)
+        {
+            if (parkDto == null || parkDto.Id != parkId)
+            {
+                return BadRequest(ModelState);
+            }
+
+            // add more validation like existense
+
+            var parkObj = _mapper.Map<NationalPark>(parkDto);
+            if (!_npRepo.UpdateNationalPark(parkObj))
+            {
+                ModelState.AddModelError("", $"Something went wrong when updating     {parkObj.Name }");
+                return StatusCode(500, ModelState);
+            }
+
+            return NoContent();
+        }
+
+        [HttpDelete("{parkId:int}", Name = "DeleteNationalPark")] // dont add space in value
+        public IActionResult DeleteNationalPark(int parkId)
+        {
+            if (!_npRepo.NationalParkExists(parkId))
+            {
+                return NotFound();
+            }
+
+            // add more validation like existense
+
+            var parkObj = _npRepo.GetNationalPark(parkId);
+            if (!_npRepo.DeleteNationalPark(parkObj))
+            {
+                ModelState.AddModelError("", $"Something went wrong when deleting     {parkObj.Name }");
+                return StatusCode(500, ModelState);
+            }
+
+            return NoContent();
         }
     }
 }
